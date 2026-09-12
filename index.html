@@ -5,6 +5,23 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 <link rel="icon" href="favicon.ico" type="image/x-icon" />
 <title>Змея и Дождик — лови капли</title>
+<meta property="og:type" content="website" />
+<meta property="og:url" content="https://anti-ai-snake-and-rain.vercel.app/" />
+<meta property="og:title" content="Змея и Дождик — лови капли" />
+<meta property="og:description" content="3D-аркада на WebGL: управляй змеёй, лови капли дождя и уклоняйся от молний. Фото игры — кадр 50 (2 секунда)." />
+<meta property="og:image" content="/og-cover.png" />
+<meta property="og:image:width" content="1280" />
+<meta property="og:image:height" content="720" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="Змея и Дождик — лови капли" />
+<meta name="twitter:image" content="/og-cover.png" />
+<link rel="image_src" href="/og-cover.png" />
+<meta name="theme-color" content="#050510" />
+<script>
+// 🤖 Детект ботов (скриншот Vercel, поисковики, соцсети) — определяется до всего остального
+window.__IS_BOT = (navigator.webdriver === true) ||
+/HeadlessChrome|VercelScreenshot|Googlebot|bingbot|YandexBot|Twitterbot|facebookexternalhit|LinkedInBot|TelegramBot|Slackbot|Discordbot|WhatsApp/i.test(navigator.userAgent || '');
+</script>
 <link rel="preload" as="image" href="rain.webp" fetchpriority="high">
 <link rel="preload" as="image" href="rain.jpg">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -39,6 +56,27 @@ box-shadow: 0 0 6px rgba(170, 220, 255, 0.8);
 10% { opacity: 1; }
 90% { opacity: 1; }
 100% { transform: translateY(110vh) translateX(20px); opacity: 0; }
+}
+/* ============ ФОТО ИГРЫ: 0–2 c размыто, на 2-й секунде (кадр 50) — чётко ============ */
+#cover-photo {
+position: absolute; inset: 0; z-index: 0; overflow: hidden; pointer-events: none;
+}
+#cover-photo img {
+width: 100%; height: 100%; object-fit: cover;
+filter: blur(14px) saturate(1.15);
+transform: scale(1.06);
+opacity: 0.8;
+transition: filter 1.2s ease, opacity 1.2s ease, transform 1.2s ease;
+}
+#cover-photo.sharp img {
+filter: blur(0) saturate(1);
+transform: scale(1);
+opacity: 1;
+}
+#cover-photo::after {
+content: ''; position: absolute; inset: 0;
+background: linear-gradient(180deg, rgba(5,10,25,0.5) 0%, rgba(5,5,16,0.78) 100%);
+pointer-events: none;
 }
 #vignette {
 position: fixed; inset: 0; z-index: 40; pointer-events: none;
@@ -566,6 +604,22 @@ animation: indicatorPulse 1.2s ease-in-out infinite;
 <p id="fatal-error-text">Ваше устройство или браузер не поддерживает WebGL. Обновите браузер или откройте игру на другом устройстве.</p>
 </div>
 <div id="page-description" class="page active">
+<!-- ФОТО ИГРИ: 0–2 c размыто, на 2-й секунде (кадр 50) становится чётким -->
+<div id="cover-photo"><img id="cover-img" src="rain.webp" alt="Змея и Дождик — фото игры (кадр 50)"></div>
+<script>
+// Бот Vercel/соцсетей: без WebGL берём готовое фото og-cover.png и показываем его на 2-й секунде
+if (window.__IS_BOT) {
+(function() {
+var img = document.getElementById('cover-img');
+var box = document.getElementById('cover-photo');
+if (img) {
+img.src = 'og-cover.png';
+img.onerror = function() { img.onerror = null; img.src = 'rain.webp'; };
+}
+setTimeout(function() { if (box) box.classList.add('sharp'); }, 2000);
+})();
+}
+</script>
 <div class="menu-rain" id="menu-rain"></div>
 <button class="lang-btn-3d" id="langToggleBtn" onclick="toggleLanguage()">RU / EN</button>
 <img src="favicon.ico" alt="Логотип" class="menu-logo">
@@ -671,16 +725,17 @@ return !!(window.WebGLRenderingContext &&
 (c.getContext('webgl') || c.getContext('experimental-webgl')));
 } catch (e) { return false; }
 }
-if (window.__threeFailed) {
+if (!window.__IS_BOT && window.__threeFailed) {
 showFatalError('Не удалось загрузить библиотеку Three.js. Проверьте интернет-соединение и перезагрузите страницу.');
 throw new Error('Three.js failed to load');
 }
-if (!isWebGLAvailable()) {
+if (!window.__IS_BOT && !isWebGLAvailable()) {
 showFatalError('Ваше устройство или браузер не поддерживает WebGL. Обновите браузер или откройте игру на другом устройстве.');
 throw new Error('WebGL not available');
 }
 </script>
 <script>
+if (window.__IS_BOT) { throw new Error('bot: menu-only mode, фото покажет cover-photo скрипт'); }
 console.log('Скрипт игры "Змея и Дождик" загружается...');
 const IS_MOBILE_UA = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 const IS_IPAD = /Macintosh/i.test(navigator.userAgent) && navigator.maxTouchPoints > 1;
@@ -2110,6 +2165,10 @@ if (e.repeat) return;
 if (e.key === 'ArrowLeft') { targetAngle = dirAngle - Math.PI / 2; e.preventDefault(); return; }
 if (e.key === 'ArrowRight') { targetAngle = dirAngle + Math.PI / 2; e.preventDefault(); return; }
 });
+// 📸 Shift+C — скачать og-cover.png (кадр 50)
+document.addEventListener('keydown', (e) => {
+if (e.code === 'KeyC' && e.shiftKey && !e.repeat) { window.downloadCover(); }
+});
 document.addEventListener('keyup', (e) => {
 if (e.key === 'ArrowUp') keyUpHeld = false;
 if (e.key === 'ArrowDown') keyDownHeld = false;
@@ -2212,6 +2271,59 @@ if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
 startTimer();
 }
 });
+// ============================ ФОТО ИГРЫ: КАДР 50 = 2 СЕКУНДА ============================
+const COVER_FRAME = 50;          // кадр 50
+const COVER_REVEAL_MS = 2000;    // = 2 секунда: фото появляется чётким
+let renderedFrames = 0;
+let coverCaptureMode = true;
+let coverRevealed = false;
+let coverDataUrl = null;
+try { coverDataUrl = localStorage.getItem('coverFrame50') || null; } catch (e) {}
+function applyCoverMeta(url) {
+try {
+document.querySelectorAll('meta[property="og:image"], meta[name="twitter:image"]').forEach(m => m.setAttribute('content', url));
+const l = document.querySelector('link[rel="image_src"]');
+if (l) l.href = url;
+} catch (e) {}
+}
+function revealCoverPhoto(url) {
+if (coverRevealed || !url) return;
+const img = document.getElementById('cover-img');
+const box = document.getElementById('cover-photo');
+if (!img || !box) return;
+coverRevealed = true;
+img.onload = function() { box.classList.add('sharp'); };
+img.src = url;
+if (img.complete) box.classList.add('sharp');
+console.log('📸 2 секунда (кадр 50): фото игры показано чётко');
+}
+if (coverDataUrl) {
+applyCoverMeta(coverDataUrl);
+const im0 = document.getElementById('cover-img');
+if (im0) im0.src = coverDataUrl;   // до 2 сек всё равно размыто (CSS filter)
+}
+setTimeout(function() { if (coverDataUrl) revealCoverPhoto(coverDataUrl); }, COVER_REVEAL_MS);
+function captureCover() {
+coverCaptureMode = false;
+try {
+coverDataUrl = renderer.domElement.toDataURL('image/png');
+try { localStorage.setItem('coverFrame50', coverDataUrl); } catch (e) {}
+applyCoverMeta(coverDataUrl);
+console.log('📸 Кадр 50 захвачен. Покажу фото на 2-й секунде. Shift+C — скачать og-cover.png');
+if (performance.now() >= COVER_REVEAL_MS) revealCoverPhoto(coverDataUrl);
+} catch (e) { console.warn('Не удалось захватить кадр 50:', e); }
+menuRendered = false;
+}
+window.downloadCover = function() {
+const url = coverDataUrl || (function(){ try { return localStorage.getItem('coverFrame50'); } catch(e){ return null; } })();
+if (!url) { alert('Кадр 50 ещё не захвачен.'); return; }
+const a = document.createElement('a');
+a.href = url; a.download = 'og-cover.png';
+document.body.appendChild(a); a.click(); a.remove();
+};
+// Красивый ракурс для кадра 50 (canvas скрыт, игрок ничего не видит)
+camera.position.set(9, 5.5, -11);
+camera.lookAt(0, 1.0, 0);
 // ============================ MAIN LOOP ============================
 const clock = new THREE.Clock(); let lastFrame = 0;
 const FPS_LIMIT = LITE_MODE ? 45 : 60;
@@ -2221,11 +2333,37 @@ if (time - lastFrame < FRAME_INTERVAL) { requestAnimationFrame(animate); return;
 lastFrame = time; requestAnimationFrame(animate);
 const delta = Math.min(clock.getDelta(), 0.05);
 const elapsed = clock.elapsedTime;
-if (renderer.domElement.style.display === 'none') {
+if (renderer.domElement.style.display === 'none' && !coverCaptureMode) {
 clock.getDelta();
 return;
 }
 if (!isGameActive || gameOver) {
+// Скрытый рендер до кадра №50 (canvas display:none) — это и есть «фото игры»
+if (coverCaptureMode) {
+updateRain(delta);
+updateSkyElements(delta, elapsed);
+for (let puddle of puddles) {
+const ripple = 1 + Math.sin(elapsed * 3 + puddle.userData.phase) * 0.05;
+puddle.scale.set(ripple, ripple, 1);
+}
+for (let i = 0; i < SEGMENTS; i++) {
+const pos = segPos[i];
+const phase = i * 0.3 - elapsed * 2.2;
+const latOff = Math.sin(phase) * 0.15;
+const yOff = Math.sin(phase * 0.6 + i * 0.08) * 0.12 + 0.4 + Math.sin(elapsed * 3 + i * 0.4) * 0.05;
+snakeBody[i].position.set(pos.x + (-moveDir.z) * latOff, yOff, pos.z + moveDir.x * latOff);
+snakeBody[i].rotation.y = Math.sin(phase * 0.5) * 0.08;
+}
+head.position.set(headPosition.x, 0.5 + Math.sin(elapsed * 3) * 0.04, headPosition.z);
+head.rotation.y = Math.PI / 2 - dirAngle + Math.sin(elapsed * 0.8) * 0.12;
+const tongueOut0 = Math.max(0, Math.sin(elapsed * 5) * 0.7 + 0.3);
+tongueGroup.position.z = 1.08 + tongueOut0 * 0.45;
+tongueGroup.visible = tongueOut0 > 0.1;
+renderer.render(scene, camera);
+renderedFrames++;
+if (renderedFrames >= COVER_FRAME) captureCover();
+return;
+}
 if (!menuRendered) {
 renderer.render(scene, camera);
 menuRendered = true;
@@ -2442,6 +2580,7 @@ showPage('page-result');
 };
 window.startGame = function() {
 initAudio();
+coverCaptureMode = false;
 score = 0; combo = 0;
 strikeCount = 0;
 const counter = document.getElementById('strike-counter');
@@ -2512,8 +2651,7 @@ updateLanguage();
 document.getElementById('txt-startBtn').addEventListener('click', startGame);
 animate(0);
 console.log('✅ Игра "Змея и Дождик" готова!');
-console.log('🎮 Режим:', LITE_MODE ? 'LITE' : 'FULL', '| Сегментов:', SEGMENTS, '| Тени:', !IS_LOW_END, '| FPS:', FPS_LIMIT);
-console.log('🆕 Фичи: вспышка неба, вибрация, осколки, прогрессия, индикатор капли');
+console.log('📸 Фото игры: кадр', COVER_FRAME, '= 2 секунда | показать Vercel: og-cover.png | Shift+C — скачать');
 </script>
 </body>
 </html>
